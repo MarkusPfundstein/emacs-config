@@ -1,15 +1,34 @@
-(add-to-list 'load-path "~/.emacs.d/workspaces/")
-(require 'workgroups)
-(workgroups-mode 1)
+;;; EMACS INIT
 
-(setq wg-morph-on nil)
+(global-auto-revert-mode t)
 
+(defvar my-packages '(exec-path-from-shell
+                      flycheck
+                      lsp-ui
+                      lsp-mode
+                      slime
+                      alect-themes
+                      exotica-theme
+                      pyenv-mode
+                      doom-themes
+                      rainbow-delimiters
+                      plz))
+
+;; ORG MODE
+(org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
+(setq org-confirm-babel-evaluate nil)
+(setq org-startup-with-inline-images t)
+(eval-after-load "org"
+  '(require 'ox-md nil t))
+
+;; DIRED
 (defun my-dired-init ()
   "to be run as hook for `dired-mode'."
   (dired-hide-details-mode 1))
 
 (add-hook 'dired-mode-hook 'my-dired-init)
 
+;; GENERAL SETTINGS
 (setq-default major-mode 'text-mode)
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 (setq colon-double-space t)
@@ -18,14 +37,13 @@
 (add-hook 'org-mode-hook 'turn-on-visual-line-mode)
 (add-hook 'org-mode-hook 'turn-off-auto-fill)
 
-(setq org-startup-with-inline-images t)
-
 (auto-image-file-mode t)
-(tool-bar-mode nil)
-(tooltip-mode nil)
+(tool-bar-mode -1)
+;(tooltip-mode nil)
 
 (set-frame-font "Monospace 18" t t)
 
+;; BACKUP DIR
 (defvar --user-backup-directory (concat user-emacs-directory "backups"))
 (if (not (file-exists-p --user-backup-directory))
     (make-directory --user-backup-directory t))
@@ -39,7 +57,7 @@
  ;; If there is more than one, they won't work right.
  '(doc-view-continuous t)
  '(package-selected-packages
-   '(treemacs-tab-bar treemacs-persp treemacs-magit treemacs-icons-dired treemacs-projectile treemacs dired-sidebar elpy slime)))
+   '(pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode evil treemacs-tab-bar treemacs-persp treemacs-magit treemacs-icons-dired treemacs-projectile treemacs dired-sidebar elpy slime)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -47,16 +65,26 @@
  ;; If there is more than one, they won't work right.
  )
 
+;; PACKAGING
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
 
-;; Install packages.
-(dolist (package '(slime paredit rainbow-delimiters))
+(dolist (package my-packages)
   (unless (package-installed-p package)
     (package-install package)))
+
+(windmove-default-keybindings 'meta)
+
+;; THEMES
+(defvar my-theme)
+;; (setf my-theme 'exotica)
+(setf my-theme 'doom-challenger-deep)
+(load-theme my-theme t)
+
+;; COMMON LISP
 
 (load (expand-file-name "~/quicklisp/slime-helper.el"))
 (setq inferior-lisp-program "/usr/bin/sbcl")
@@ -64,17 +92,17 @@
 (setq show-paren-delay 0)
 (show-paren-mode)
 
-(add-hook 'emacs-lisp-mode-hook 'enable-paredit-mode)
-(add-hook 'eval-expression-minibuffer-setup-hook 'enable-paredit-mode)
-(add-hook 'ielm-mode-hook 'enable-paredit-mode)
-(add-hook 'lisp-interaction-mode-hook 'enable-paredit-mode)
-(add-hook 'lisp-mode-hook 'enable-paredit-mode)
-(add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
-(require 'paredit)
-(defun override-slime-del-key ()
-  (define-key slime-repl-mode-map
-    (read-kbd-macro paredit-backward-delete-key) nil))
-(add-hook 'slime-repl-mode-hook 'override-slime-del-key)
+;; (add-hook 'emacs-lisp-mode-hook 'enable-paredit-mode)
+;; (add-hook 'eval-expression-minibuffer-setup-hook 'enable-paredit-mode)
+;; (add-hook 'ielm-mode-hook 'enable-paredit-mode)
+;; (add-hook 'lisp-interaction-mode-hook 'enable-paredit-mode)
+;; (add-hook 'lisp-mode-hook 'enable-paredit-mode)
+;; (add-hook 'slime-repl-mode-hook 'enable-paredit-mode)
+;; (require 'paredit)
+;; (defun override-slime-del-key ()
+;;   (define-key slime-repl-mode-map
+;;     (read-kbd-macro paredit-backward-delete-key) nil))
+;; (add-hook 'slime-repl-mode-hook 'override-slime-del-key)
 
 ;; Enable Rainbow Delimiters.
 (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
@@ -95,145 +123,74 @@
 (set-face-foreground 'rainbow-delimiters-depth-8-face "#999")  ; medium gray
 (set-face-foreground 'rainbow-delimiters-depth-9-face "#666")  ; dark gray
 
-(use-package elpy
-  :ensure t
-  :init
-  (elpy-enable))
+;; CUSTOM LOAD PATHS
 
-(windmove-default-keybindings 'meta)
+(add-to-list 'load-path "~/.emacs.d/emacs-async")
+(add-to-list 'load-path "~/.emacs.d/sr-speedbar")
 
-;(use-package dired-sidebar
-;  :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
-;  :ensure t
-;  :commands (dired-sidebar-toggle-sidebar)
-;  :init
-;  (add-hook 'dired-sidebar-mode-hook
-;            (lambda ()
-;              (unless (file-remote-p default-directory)
-;                (auto-revert-mode))))
-;  :config
-;  (push 'toggle-window-split dired-sidebar-toggle-hidden-commands)
-;  (push 'rotate-windows dired-sidebar-toggle-hidden-commands);
+;; SPEEDBAR 
+(require 'sr-speedbar)
+(setq speedbar-show-unknown-files t)
+(setq speedbar-use-images nil)
+(setq sr-speedbar-right-side nil)
+(setq speedbar-directory-unshown-regexp
+      "^\\(CVS\\|RCS\\|SCCS\\|\\.\\.*$\\)\\'")
+(sr-speedbar-refresh-turn-off)
 
-;  (setq dired-sidebar-subtree-line-prefix "__")
-;  (setq dired-sidebar-theme 'arrow)
-;  (setq dired-sidebar-use-term-integration t)
-;  (setq dired-sidebar-use-custom-font t))
 
-;(defun sidebar-toggle ()
-;  "Toggle both `dired-sidebar' and `ibuffer-sidebar'."
-;  (interactive)
-;  (dired-sidebar-toggle-sidebar)
-;  (ibuffer-sidebar-toggle-sidebar))
-
-(use-package treemacs
-  :ensure t
-  :defer t
-  :init
-  (with-eval-after-load 'winum
-    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+;; PYTHON VENV
+;(venv-initialize-interactive-shells)
+;(setq venv-location "~/.virtualenvs")
+(require 'pyenv-mode)
+(use-package pyvenv
+  :diminish
   :config
-  (progn
-    (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
-          treemacs-deferred-git-apply-delay        0.5
-          treemacs-directory-name-transformer      #'identity
-          treemacs-display-in-side-window          t
-          treemacs-eldoc-display                   'simple
-          treemacs-file-event-delay                2000
-          treemacs-file-extension-regex            treemacs-last-period-regex-value
-          treemacs-file-follow-delay               0.2
-          treemacs-file-name-transformer           #'identity
-          treemacs-follow-after-init               t
-          treemacs-expand-after-init               t
-          treemacs-find-workspace-method           'find-for-file-or-pick-first
-          treemacs-git-command-pipe                ""
-          treemacs-goto-tag-strategy               'refetch-index
-          treemacs-header-scroll-indicators        '(nil . "^^^^^^")
-          treemacs-hide-dot-git-directory          t
-          treemacs-indentation                     2
-          treemacs-indentation-string              " "
-          treemacs-is-never-other-window           nil
-          treemacs-max-git-entries                 5000
-          treemacs-missing-project-action          'ask
-          treemacs-move-forward-on-expand          nil
-          treemacs-no-png-images                   nil
-          treemacs-no-delete-other-windows         t
-          treemacs-project-follow-cleanup          nil
-          treemacs-persist-file                    (expand-file-name ".cache/treemacs-persist" user-emacs-directory)
-          treemacs-position                        'left
-          treemacs-read-string-input               'from-child-frame
-          treemacs-recenter-distance               0.1
-          treemacs-recenter-after-file-follow      nil
-          treemacs-recenter-after-tag-follow       nil
-          treemacs-recenter-after-project-jump     'always
-          treemacs-recenter-after-project-expand   'on-distance
-          treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
-          treemacs-project-follow-into-home        nil
-          treemacs-show-cursor                     nil
-          treemacs-show-hidden-files               nil
-          treemacs-silent-filewatch                nil
-          treemacs-silent-refresh                  nil
-          treemacs-sorting                         'alphabetic-asc
-          treemacs-select-when-already-in-treemacs 'move-back
-          treemacs-space-between-root-nodes        t
-          treemacs-tag-follow-cleanup              t
-          treemacs-tag-follow-delay                1.5
-          treemacs-text-scale                      nil
-          treemacs-user-mode-line-format           nil
-          treemacs-user-header-line-format         nil
-          treemacs-wide-toggle-width               70
-          treemacs-width                           35
-          treemacs-width-increment                 1
-          treemacs-width-is-initially-locked       t
-          treemacs-workspace-switch-cleanup        nil)
+  (setq pyvenv-mode-line-indicator
+        '(pyvenv-virtual-env-name ("[pyenv:" pyvenv-virtual-env-name "] ")))
+  (pyvenv-mode +1))
 
-    ;; The default width and height of the icons is 22 pixels. If you are
-    ;; using a Hi-DPI display, uncomment this to double the icon size.
-    ;;(treemacs-resize-icons 44)
+;; FLYCHECK
+(add-hook 'after-init-hook #'global-flycheck-mode)
 
-    (treemacs-follow-mode t)
-    (treemacs-filewatch-mode t)
-    (treemacs-fringe-indicator-mode 'always)
-    (when treemacs-python-executable
-      (treemacs-git-commit-diff-mode t))
+(setq-default flycheck-emacs-lisp-load-path 'inherit)
 
-    (pcase (cons (not (null (executable-find "git")))
-                 (not (null treemacs-python-executable)))
-      (`(t . t)
-       (treemacs-git-mode 'deferred))
-      (`(t . _)
-       (treemacs-git-mode 'simple)))
+;; LSP
+(setq lsp-pylsp-server-command "~/.pyenv/shims/pylsp")
+(use-package lsp-mode
+  :config
+  (setq lsp-idle-delay 0.5
+        lsp-enable-symbol-highlighting t
+        lsp-enable-snippet nil
+        lsp-pyls-plugins-flake8-enabled t)
+  (lsp-register-custom-settings
+   '(("pylsp.plugins.pyls_mypy.enabled" t t)
+     ("pylsp.plugins.pyls_mypy.live_mode" nil t)
+     ("pylsp.plugins.pyls_black.enabled" t t)
+     ("pylsp.plugins.pyls_isort.enabled" t t)
 
-    (treemacs-hide-gitignored-files-mode nil))
-  :bind
-  (:map global-map
-        ("M-0"       . treemacs-select-window)
-        ("C-x t 1"   . treemacs-delete-other-windows)
-        ("C-x t t"   . treemacs)
-        ("C-x t d"   . treemacs-select-directory)
-        ("C-x t B"   . treemacs-bookmark)
-        ("C-x t C-t" . treemacs-find-file)
-        ("C-x t M-t" . treemacs-find-tag)))
+     ;; Disable these as they're duplicated by flake8
+     ("pylsp.plugins.pycodestyle.enabled" nil t)
+     ("pylsp.plugins.mccabe.enabled" nil t)
+     ("pylsp.plugins.pyflakes.enabled" nil t)))
+  :hook ((python-mode . lsp)))
 
+(use-package lsp-ui
+  :commands lsp-ui-mode)
 
-(use-package treemacs-projectile
-  :after (treemacs projectile)
-  :ensure t)
+(setq python-flymake-command '("pylint" "--from-stdin" "stdin"))
 
-(use-package treemacs-icons-dired
-  :hook (dired-mode . treemacs-icons-dired-enable-once)
-  :ensure t)
+(exec-path-from-shell-initialize)
 
-(use-package treemacs-magit
-  :after (treemacs magit)
-  :ensure t)
+(defun clear-elisp-from-functions-with-prefix (prefix)
+  "Clear elisp of all functions with PREFIX.
+E.g. when PREFIX equals ferm, all functions starting with ferm-
+will be deleted."
+  (interactive "sprefix:")
+  (if (yes-or-no-p (format "delete all symbols starting with %s-?" prefix))
+      (mapatoms (lambda (symbol)
+                  (if (string-prefix-p (format "%s-" prefix) (symbol-name symbol))
+                      (unintern symbol nil))))))
 
-(use-package treemacs-persp ;;treemacs-perspective if you use perspective.el vs. persp-mode
-  :after (treemacs persp-mode) ;;or perspective vs. persp-mode
-  :ensure t
-  :config (treemacs-set-scope-type 'Perspectives))
+(load "~/.emacs.d/sysmon/systemctl.el")
 
-(use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
-  :after (treemacs)
-  :ensure t
-  :config (treemacs-set-scope-type 'Tabs))
+;;; .emacs ends here
