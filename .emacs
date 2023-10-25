@@ -10,9 +10,23 @@
                       alect-themes
                       exotica-theme
                       pyenv-mode
+                      dap-mode
                       doom-themes
                       rainbow-delimiters
                       plz))
+
+
+;; PACKAGING
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+(dolist (package my-packages)
+  (unless (package-installed-p package)
+    (package-install package)))
+
 
 ;; ORG MODE
 (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
@@ -23,7 +37,6 @@
 
 ;; DIRED
 (defun my-dired-init ()
-  "to be run as hook for `dired-mode'."
   (dired-hide-details-mode 1))
 
 (add-hook 'dired-mode-hook 'my-dired-init)
@@ -49,32 +62,6 @@
     (make-directory --user-backup-directory t))
 (setq backup-directory-alist `(("." . ,--user-backup-directory)))
 (setq make-backup-files t)
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(doc-view-continuous t)
- '(package-selected-packages
-   '(pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode evil treemacs-tab-bar treemacs-persp treemacs-magit treemacs-icons-dired treemacs-projectile treemacs dired-sidebar elpy slime)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-;; PACKAGING
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
-
-(dolist (package my-packages)
-  (unless (package-installed-p package)
-    (package-install package)))
 
 (windmove-default-keybindings 'meta)
 
@@ -158,18 +145,28 @@
 (setq lsp-pylsp-server-command "~/.pyenv/shims/pylsp")
 (use-package lsp-mode
   :config
-  (setq lsp-idle-delay 0.5
+  (setq lsp-idle-delay 0.25
         lsp-enable-symbol-highlighting t
         lsp-enable-snippet nil
-        lsp-pyls-plugins-flake8-enabled t)
+        lsp-semantic-tokens-enable t
+        lsp-pylsp-plugins-flake8-enabled t
+        lsp-pylsp-plugins-flake8-ignore '(D100
+                                          D101
+                                          D102
+                                          D103
+                                          D104
+                                          D105
+                                          D106))
+                                          
   (lsp-register-custom-settings
-   '(("pylsp.plugins.pyls_mypy.enabled" t t)
-     ("pylsp.plugins.pyls_mypy.live_mode" nil t)
+   '(("pylsp.plugins.pylsp_mypy.enabled" t t)
+     ("pylsp.plugins.pyls_mypy.live_mode" t t)
      ("pylsp.plugins.pyls_black.enabled" t t)
      ("pylsp.plugins.pyls_isort.enabled" t t)
+     
 
      ;; Disable these as they're duplicated by flake8
-     ("pylsp.plugins.pycodestyle.enabled" nil t)
+     ("pylsp.plugins.pycodestyle.enabled" t t)
      ("pylsp.plugins.mccabe.enabled" nil t)
      ("pylsp.plugins.pyflakes.enabled" nil t)))
   :hook ((python-mode . lsp)))
@@ -177,7 +174,10 @@
 (use-package lsp-ui
   :commands lsp-ui-mode)
 
-(setq python-flymake-command '("pylint" "--from-stdin" "stdin"))
+(use-package dap-mode)
+
+;; we use flycheck
+;;(setq python-flymake-command '("pylint" "--from-stdin" "stdin"))
 
 (exec-path-from-shell-initialize)
 
@@ -194,3 +194,17 @@ will be deleted."
 (load "~/.emacs.d/sysmon/systemctl.el")
 
 ;;; .emacs ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(doc-view-continuous t)
+ '(package-selected-packages
+   '(dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode evil treemacs-tab-bar treemacs-persp treemacs-magit treemacs-icons-dired treemacs-projectile treemacs dired-sidebar elpy slime)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
