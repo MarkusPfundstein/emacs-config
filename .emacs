@@ -382,6 +382,9 @@ will be deleted."
   (pyenv-mode-set pyenv-name)
   (lsp-workspace-restart (lsp--read-workspace)))
 
+(global-set-key (kbd "C-c mi") 'my-pylsp-init)
+(global-set-key (kbd "C-c me") 'my-sh-eval-region)
+
 (load "~/.emacs.d/sysmon/systemctl.el")
 
 (custom-set-variables
