@@ -18,6 +18,11 @@
                     terraform-mode
                     terraform-doc
                     projectile
+                    treemacs
+                    treemacs-projectile
+                    treemacs-all-the-icons
+                    treemacs-icons-dired
+                    treemacs-magit
                     plz))
 
 
@@ -80,8 +85,13 @@
 
 ;; THEMES
 (defvar my-theme)
-;; (setf my-theme 'exotica)
+;; (setf my-theme 'exotica
+
 (setf my-theme 'doom-challenger-deep)
+
+(when (display-graphic-p)
+       (require 'treemacs-all-the-icons)
+       (require 'all-the-icons))
 (load-theme my-theme t)
 
 ;; COMMON LISP
@@ -231,9 +241,17 @@
         ("C-x t C-t" . treemacs-find-file)
         ("C-x t M-t" . treemacs-find-tag)))
 
+(treemacs-load-theme 'all-the-icons)
+
 (use-package treemacs-projectile
   :after (treemacs projectile)
   :ensure t)
+
+(use-package treemacs-magit
+  :ensure t
+  :after (treemacs magit))
+
+(treemacs-icons-dired-mode t)
 
 ;; PYTHON VENV
 ;(venv-initialize-interactive-shells)
@@ -393,7 +411,7 @@ will be deleted."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
+   '(treemacs-all-the-icons terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
