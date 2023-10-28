@@ -197,7 +197,7 @@
         treemacs-litter-directories              '("/node_modules" "/.venv" "/.cask")
         treemacs-project-follow-into-home        nil
         treemacs-show-cursor                     nil
-        treemacs-show-hidden-files               t
+        treemacs-show-hidden-files               nil
         treemacs-silent-filewatch                nil
         treemacs-silent-refresh                  nil
         treemacs-sorting                         'alphabetic-asc
@@ -215,7 +215,6 @@
         treemacs-workspace-switch-cleanup        nil)
 
     (treemacs-follow-mode t)
-;    (treemacs-project-follow-mode t)
     (treemacs-filewatch-mode t)
     (treemacs-fringe-indicator-mode 'always)
     (treemacs-hide-gitignored-files-mode nil)
@@ -237,8 +236,10 @@
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t t"   . treemacs)
         ("C-x t d"   . treemacs-select-directory)
+        ("C-x t ."   . treemacs-toggle-show-dotfiles)
         ("C-x t B"   . treemacs-bookmark)
         ("C-x t C-t" . treemacs-find-file)
+        ("C-x t w"   . treemacs-switch-workspace)
         ("C-x t M-t" . treemacs-find-tag)))
 
 (treemacs-load-theme 'all-the-icons)
@@ -332,7 +333,12 @@
                ("pylsp.plugins.mccabe.enabled" nil t)
                ("pylsp.plugins.pyflakes.enabled" nil t))))
   :hook ((python-mode . lsp-deferred)
-         (terraform-mode .lsp-deferred)))
+         (c-mode . lsp-deferred)
+         (c++-mode . lsp-deferred)
+         (terraform-mode . lsp-deferred)))
+
+(setq gc-cons-threshold 100000000)
+(setq read-process-output-max (* 10 1024 1024)) ;; 10mb
 
 ;;(add-to-list 'lsp-language-id-configuration '(terraform-mode . "terraform"))
 
@@ -402,6 +408,7 @@ will be deleted."
 
 (global-set-key (kbd "C-c mi") 'my-pylsp-init)
 (global-set-key (kbd "C-c me") 'my-sh-eval-region)
+
 
 (load "~/.emacs.d/sysmon/systemctl.el")
 
