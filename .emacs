@@ -1,5 +1,5 @@
 ;;; EMACS INIT
-
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
 (global-auto-revert-mode t)
 
 (defvar my-packages)
@@ -23,6 +23,10 @@
                     treemacs-all-the-icons
                     treemacs-icons-dired
                     treemacs-magit
+                    which-key
+                    avy
+                    yasnippet
+                    hydra
                     plz))
 
 
@@ -38,6 +42,7 @@
   (unless (package-installed-p package)
     (package-install package)))
 
+(which-key-mode)
 
 ;; ORG MODE
 (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
@@ -235,6 +240,10 @@
         ("M-0"       . treemacs-select-window)
         ("C-x t 1"   . treemacs-delete-other-windows)
         ("C-x t t"   . treemacs)
+        ;; only for dap debug
+        ("C-x t o"   . treemacs-expand-extension-node)
+        ;; only for dap debug
+        ("C-x t c"   . treemacs-collapse-extension-node)
         ("C-x t d"   . treemacs-select-directory)
         ("C-x t ."   . treemacs-toggle-show-dotfiles)
         ("C-x t B"   . treemacs-bookmark)
@@ -334,11 +343,16 @@
                ("pylsp.plugins.pyflakes.enabled" nil t))))
   :hook ((python-mode . lsp-deferred)
          (c-mode . lsp-deferred)
-         (c++-mode . lsp-deferred)
+         (c++-mode . lsp)
          (terraform-mode . lsp-deferred)))
 
 (setq gc-cons-threshold 100000000)
 (setq read-process-output-max (* 10 1024 1024)) ;; 10mb
+
+(with-eval-after-load 'lsp-mode
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+  (require 'dap-cpptools)
+  (yas-global-mode))
 
 ;;(add-to-list 'lsp-language-id-configuration '(terraform-mode . "terraform"))
 
@@ -357,6 +371,8 @@
 ;; DAP
 
 (use-package dap-mode)
+(require 'dap-gdb-lldb)
+
 
 ;; Exec path
 
@@ -409,6 +425,11 @@ will be deleted."
 (global-set-key (kbd "C-c mi") 'my-pylsp-init)
 (global-set-key (kbd "C-c me") 'my-sh-eval-region)
 
+;(add-hook 'c++mode-hook
+          
+;;(require 'dap-cpptools)
+(require 'dap-gdb-lldb)
+
 
 (load "~/.emacs.d/sysmon/systemctl.el")
 
@@ -418,7 +439,7 @@ will be deleted."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(treemacs-all-the-icons terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
+   '(helm-lsp which-key treemacs-all-the-icons terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
