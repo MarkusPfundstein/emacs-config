@@ -25,6 +25,7 @@
                     treemacs-magit
                     which-key
                     avy
+                    helm
                     yasnippet
                     hydra
                     plz))
@@ -44,12 +45,17 @@
 
 (which-key-mode)
 
+;; GNUS
+(setq browse-url-browser-function 'eww)
+
 ;; ORG MODE
 (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
 (setq org-confirm-babel-evaluate nil)
 (setq org-startup-with-inline-images t)
 (eval-after-load "org"
   '(require 'ox-md nil t))
+
+
 
 ;; DIRED
 (defun my-dired-init ()
@@ -142,6 +148,9 @@
 
 (add-to-list 'load-path "~/.emacs.d/emacs-async")
 (add-to-list 'load-path "~/.emacs.d/sr-speedbar")
+(add-to-list 'load-path "~/.emacs.d/org-ref")
+
+(use-package org-ref)
 
 ;; SPEEDBAR
 (require 'sr-speedbar)
@@ -414,6 +423,9 @@ will be deleted."
                   (if (string-prefix-p (format "%s-" prefix) (symbol-name symbol))
                       (unintern symbol nil))))))
 
+(defun my-insert-current-date () (interactive)
+    (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
+
 (require 'lsp)
 (defun my-pylsp-init (pyenv-name)
   "Init pylsp and activates pyenv with PYENV-NAME."
@@ -430,8 +442,11 @@ will be deleted."
 ;;(require 'dap-cpptools)
 (require 'dap-gdb-lldb)
 
+;; requre helm
+(require 'helm)
+(require 'helm-autoloads)
 
-(load "~/.emacs.d/sysmon/systemctl.el")
+;;(load "~/.emacs.d/sysmon/systemctl.el")
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -439,7 +454,7 @@ will be deleted."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(helm-lsp which-key treemacs-all-the-icons terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
+   '(helm org-ref helm-lsp which-key treemacs-all-the-icons terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
