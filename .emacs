@@ -1,6 +1,7 @@
 ;;; EMACS INIT
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (global-auto-revert-mode t)
+(setq x-select-enable-clipboard t)
 
 (defvar my-packages)
 (setq my-packages '(exec-path-from-shell
@@ -28,6 +29,11 @@
                     helm
                     yasnippet
                     hydra
+                    vterm
+                    notmuch
+                    leuven-theme
+                    rust-mode
+                    gptel
                     plz))
 
 
@@ -35,6 +41,7 @@
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives '("gnu-devel" . "https://elpa.gnu.org/dev/") t)
+
 (package-initialize)
 (unless package-archive-contents
   (package-refresh-contents))
@@ -48,6 +55,9 @@
 ;; GNUS
 (setq browse-url-browser-function 'eww)
 
+(require 'notmuch)
+(setq-default notmuch-search-oldest-first nil)
+
 ;; ORG MODE
 (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
 (setq org-confirm-babel-evaluate nil)
@@ -56,6 +66,13 @@
   '(require 'ox-md nil t))
 
 
+(setq mail-user-agent 'message-user-agent)
+(require 'smtpmail)
+(setq message-send-mail-function 'smtpmail-send-it
+      smtpmail-stream-type 'ssl
+      smtpmail-smtp-user "markus@life-electronic.nl"
+      smtpmail-smtp-server "smtp.transip.email"
+      smtpmail-smtp-service 465)
 
 ;; DIRED
 (defun my-dired-init ()
@@ -84,6 +101,14 @@
 (set-frame-font "Monospace 18" t t)
 
 
+51
+
+(add-hook 'json-mode-hook
+          (lambda ()
+            (make-local-variable 'js-indent-level)
+            (setq tab-width 2)
+            (setq js-indent-level 2)))
+
 
 ;; BACKUP DIR
 (defvar --user-backup-directory (concat user-emacs-directory "backups"))
@@ -96,14 +121,18 @@
 
 ;; THEMES
 (defvar my-theme)
-;; (setf my-theme 'exotica
+(progn 
+  ;;  (setf my-theme 'exotica)
+  (setf my-theme 'leuven-dark)
+  (load-theme my-theme t)
+  (setf my-theme 'doom-challenger-deep)
+  (load-theme my-theme t))
 
-(setf my-theme 'doom-challenger-deep)
 
 (when (display-graphic-p)
        (require 'treemacs-all-the-icons)
        (require 'all-the-icons))
-(load-theme my-theme t)
+
 
 ;; COMMON LISP
 
@@ -145,21 +174,14 @@
 (set-face-foreground 'rainbow-delimiters-depth-9-face "#666")  ; dark gray
 
 ;; CUSTOM LOAD PATHS
-
-(add-to-list 'load-path "~/.emacs.d/emacs-async")
-(add-to-list 'load-path "~/.emacs.d/sr-speedbar")
 (add-to-list 'load-path "~/.emacs.d/org-ref")
 
 (use-package org-ref)
 
-;; SPEEDBAR
-(require 'sr-speedbar)
-(setq speedbar-show-unknown-files t)
-(setq speedbar-use-images nil)
-(setq sr-speedbar-right-side nil)
-(setq speedbar-directory-unshown-regexp
-      "^\\(CVS\\|RCS\\|SCCS\\|\\.\\.*$\\)\\'")
-(sr-speedbar-refresh-turn-off)
+;; CHATGPT
+(require 'gptel)
+(setq-default gptel-default-mode 'org-mode)
+(setq-default gptel-model 'gpt-4)
 
 ;; PROJECTILE
 
@@ -273,15 +295,7 @@
 (treemacs-icons-dired-mode t)
 
 ;; PYTHON VENV
-;(venv-initialize-interactive-shells)
-;(setq venv-location "~/.virtualenvs")
 (require 'pyenv-mode)
-;(use-package pyvenv
-;  :diminish
-;  :config (progn
-;            (setq pyvenv-mode-line-indicator
-;                  '(pyvenv-virtual-env-name ("[pyenv:" pyvenv-virtual-env-name "] ")))
-;            (pyvenv-mode t)))
 
 (defun projectile-pyenv-mode-set ()
   "Set pyenv version matching project name."
@@ -290,9 +304,6 @@
         (progn
           (message "switch pyenv"))
       (message "unswitch pyenv"))))
-;          (pyenv-mode-set project))
-   ;       (lsp-workspace-restart (lsp--read-workspace)))
-;;      (pyenv-mode-unset))))
 
 (add-hook 'projectile-after-switch-project-hook 'projectile-pyenv-mode-set)
 
@@ -315,45 +326,48 @@
 ;; LSP SETUP
 (setq-default lsp-pylsp-server-command "~/.pyenv/shims/pylsp")
 (use-package lsp-mode
-  :config (progn
-            (setq lsp-idle-delay 0.25
-                  lsp-enable-symbol-highlighting t
-                  lsp-enable-snippet nil
-                  lsp-semantic-tokens-enable t
-                  lsp-pylsp-plugins-flake8-enabled t
-                  lsp-pylsp-plugins-flake8-ignore '(D100
-                                                    D101
-                                                    D102
-                                                    D103
-                                                    D104
-                                                    D105
-                                                    D106))
-            (lsp-register-client
-             (make-lsp-client :new-connection
-                              (lsp-stdio-connection '("terraform-ls" "serve"))
-                              :major-modes '(terraform-mode)
-                              :server-id 'terraform-ls))
+  :config 
+  (setq lsp-idle-delay 0.25
+        lsp-enable-symbol-highlighting t
+        lsp-enable-snippet nil
+        lsp-semantic-tokens-enable t
+        lsp-pylsp-plugins-flake8-enabled t
+        lsp-pylsp-plugins-flake8-ignore '(D100
+                                          D101
+                                          D102
+                                          D103
+                                          D104
+                                          D105
+                                          D106))
+
+  (lsp-register-client
+   (make-lsp-client :new-connection
+                    (lsp-stdio-connection '("terraform-ls" "serve"))
+                    :major-modes '(terraform-mode)
+                    :server-id 'terraform-ls))
                                            
-            ;; (lsp-register-client
-            ;;  (make-lsp-client :new-connection
-            ;;                   (lsp-tramp-connection "/var/lib/cloud-user/.local/bin/pylsp")
-            ;;                   :major-modes '(python-mode)
-            ;;                   :remote? t
-            ;;                   :server-id 'pylsp-remote))
-            (lsp-register-custom-settings
-             '(("pylsp.plugins.pylsp_mypy.enabled" t t)
-               ("pylsp.plugins.pyls_mypy.live_mode" t t)
-               ("pylsp.plugins.pyls_black.enabled" t t)
-               ("pylsp.plugins.pyls_isort.enabled" t t)
-     
+  ;; (lsp-register-client
+  ;;  (make-lsp-client :new-connection
+  ;;                   (lsp-tramp-connection "/var/lib/cloud-user/.local/bin/pylsp")
+  ;;                   :major-modes '(python-mode)
+  ;;                   :remote? t
+  ;;                   :server-id 'pylsp-remote))
+  (lsp-register-custom-settings
+   '(("pylsp.plugins.pylsp_mypy.enabled" t t)
+     ("pylsp.plugins.pylsp_mypy.live_mode" t t)
+     ("pylsp.plugins.pylsp_mypy.report_progress" t t)
+     ("pylsp.plugins.pylsp_black.enabled" t t)
+               ("pylsp.plugins.pylsp_isort.enabled" t t)
+               
                ;; Disable these as they're duplicated by flake8
                ("pylsp.plugins.pycodestyle.enabled" t t)
                ("pylsp.plugins.mccabe.enabled" nil t)
-               ("pylsp.plugins.pyflakes.enabled" nil t))))
-  :hook ((python-mode . lsp-deferred)
-         (c-mode . lsp-deferred)
+               ("pylsp.plugins.pyflakes.enabled" nil t)))
+  :hook ((python-mode . lsp)
+         (c-mode . lsp)
          (c++-mode . lsp)
-         (terraform-mode . lsp-deferred)))
+         (rust-mode . lsp)
+         (terraform-mode . lsp)))
 
 (setq gc-cons-threshold 100000000)
 (setq read-process-output-max (* 10 1024 1024)) ;; 10mb
@@ -363,10 +377,40 @@
   (require 'dap-cpptools)
   (yas-global-mode))
 
+;; DAP
+
+(use-package dap-mode)
+(require 'dap-gdb-lldb)
+
+;(dap-cpptools-setup t)
+
+(with-eval-after-load 'dap-cpptools
+  ;; Add a template specific for debugging Rust programs.
+  ;; It is used for new projects, where I can M-x dap-edit-debug-template
+  (dap-register-debug-template "Rust::CppTools Run Configuration"
+                               (list :type "cppdbg"
+                                     :request "launch"
+                                     :name "Rust::Run"
+                                     :MIMode "gdb"
+                                     :miDebuggerPath "rust-gdb"
+                                     :environment []
+                                     :program "${workspaceFolder}/target/debug/hello / replace with binary"
+                                     :cwd "${workspaceFolder}"
+                                     :console "external"
+                                     :dap-compilation "cargo build"
+                                     :dap-compilation-dir "${workspaceFolder}")))
+
 ;;(add-to-list 'lsp-language-id-configuration '(terraform-mode . "terraform"))
 
+(with-eval-after-load 'dap-mode
+  (setq dap-default-terminal-kind "integrated") ;; Make sure that terminal programs open a term for I/O in an Emacs buffer
+  (dap-auto-configure-mode +1))
+
 (use-package lsp-ui
-  :commands lsp-ui-mode)
+  :config
+  (setq lsp-ui-sideline-ignore-duplicate t)
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+;  :commands lsp-ui-mode)
 
 ;; tramp
 
@@ -376,11 +420,6 @@
 ;;(setq tramp-shell-prompt-pattern "[\W] $")
 ;(setenv "ESHELL" "sh")
 
-
-;; DAP
-
-(use-package dap-mode)
-(require 'dap-gdb-lldb)
 
 
 ;; Exec path
@@ -437,6 +476,57 @@ will be deleted."
 (global-set-key (kbd "C-c mi") 'my-pylsp-init)
 (global-set-key (kbd "C-c me") 'my-sh-eval-region)
 
+(defun my-email-fetch ()
+  "Fetch new email with offlineimap."
+  (interactive)
+  (let* ((output-buf (get-buffer-create "*update email*"))
+         (offlineimap-p (start-process-shell-command
+                         "my-email-fetch-offlineimap"
+                         output-buf
+                         "offlineimap")))
+    (set-process-sentinel offlineimap-p 'my--email-fetch-offlineimap-sentinel)))
+
+(defun my--email-fetch-offlineimap-sentinel (process event-name)
+  "Callback method from my-email-fetch.
+PROCESS, EVENT-NAME."
+  (let* ((event (string-trim-right event-name))
+         (success (string-equal "finished" event)))
+    (if success
+        (progn
+          (message "New email fetched.  Start notmuch new for indexing!")
+          (let* ((output-buf (get-buffer-create "*update email*"))
+                 (notmuch-p (start-process-shell-command
+                             "my-email-fetch-notmuch"
+                             output-buf
+                             "notmuch new")))
+            (set-process-sentinel notmuch-p 'my--email-fetch-notmuch-sentinel)))
+      (error "ERROR UPDATING EMAIL DURING offlineimap"))))
+
+(defun my--email-fetch-notmuch-sentinel (process event-name)
+  "Callback method from my-email-fetch.
+PROCESS, EVENT-NAME."
+  (let* ((event (string-trim-right event-name))
+         (success (string-equal "finished" event)))
+    (if success
+        (progn
+          (message "EMAIL UPDATED AND INDEXED")
+          (notmuch))
+      (error "ERROR UPDATING EMAIL DURING notmuch new"))))
+
+(defun my-notmuch-show-jump-to-latest ()
+  "Jump to the message in the current thread with the latest timestamp."
+  (interactive)
+  (let ((timestamp 0)
+	    latest)
+    (notmuch-show-mapc
+     (lambda () (let ((ts (notmuch-show-get-prop :timestamp)))
+		      (when (> ts timestamp)
+			(setq timestamp ts
+			      latest (point))))))
+    (if latest
+	    (goto-char latest)
+      (error "Cannot find latest message"))))
+
 ;(add-hook 'c++mode-hook
           
 ;;(require 'dap-cpptools)
@@ -446,6 +536,30 @@ will be deleted."
 (require 'helm)
 (require 'helm-autoloads)
 
+(helm-mode 1)
+
+(defvar spacemacs-helm-display-help-buffer-regexp '("\\*.*Helm.*Help.*\\*"))
+(defvar spacemacs-helm-display-buffer-regexp `("\\*.*helm.*\\*"
+                                               (display-buffer-in-side-window)
+                                               (inhibit-same-window . nil)
+                                               (side . bottom)
+                                               (window-width . 0.6)
+                                               (window-height . 0.4)))
+
+(defun display-helm-at-bottom (buffer &optional _resume)
+  (let ((display-buffer-alist (list spacemacs-helm-display-help-buffer-regexp
+                                    spacemacs-helm-display-buffer-regexp)))
+    (display-buffer buffer)))
+(setq helm-display-function 'display-helm-at-bottom)
+
+;(setq helm-display-function 'helm-default-display-buffer)
+;(setq helm-display-function 'helm-display-buffer-in-own-frame)
+(setq completion-styles '(flex))
+
+(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+
+(load "~/clients/fermioniq/emacs-scripts/ferm-api.el")
+
 ;;(load "~/.emacs.d/sysmon/systemctl.el")
 
 (custom-set-variables
@@ -453,8 +567,10 @@ will be deleted."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("13096a9a6e75c7330c1bc500f30a8f4407bd618431c94aeab55c9855731a95e1" "34af44a659b79c9f92db13ac7776b875a8d7e1773448a8301f97c18437a822b6" "330d5278ead8dd474f8e79d0cadae973aae3e56f86e6e6d1667d723992b34a59" "ff24d14f5f7d355f47d53fd016565ed128bf3af30eb7ce8cae307ee4fe7f3fd0" "8b148cf8154d34917dfc794b5d0fe65f21e9155977a36a5985f89c09a9669aa0" "c517e98fa036a0c21af481aadd2bdd6f44495be3d4ac2ce9d69201fcb2578533" "014cb63097fc7dbda3edf53eb09802237961cbb4c9e9abd705f23b86511b0a69" "631c52620e2953e744f2b56d102eae503017047fb43d65ce028e88ef5846ea3b" "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738" "f4d1b183465f2d29b7a2e9dbe87ccc20598e79738e5d29fc52ec8fb8c576fcfd" "badd1a5e20bd0c29f4fe863f3b480992c65ef1fa63951f59aa5d6b129a3f9c4c" "aec7b55f2a13307a55517fdf08438863d694550565dee23181d2ebd973ebd6b8" "e87fd8e24e82eb94d63b1a9c79abc8161d25de9f2f13b64014d3bf4b8db05e9a" default))
  '(package-selected-packages
-   '(helm org-ref helm-lsp which-key treemacs-all-the-icons terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
+   '(gptel chatgpt rust-mode flycheck-mypy company-lsp leuven-theme notmuch vterm helm org-ref helm-lsp which-key treemacs-all-the-icons terraform-doc terraform-mode dap-mode pyenv-mode pyenv plz doom-themes exotica-theme alect-themes exec-path-from-shell flycheck lsp-ui lsp-mode dired-sidebar elpy slime)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
